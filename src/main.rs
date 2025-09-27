@@ -286,7 +286,8 @@ fn init_post_process_pipeline(
 // This is the component that will get passed to the shader
 #[derive(Component, Default, Clone, Copy, ExtractComponent, ShaderType)]
 struct PostProcessSettings {
-    intensity: f32,
+    time: f32,
+    debug_step: f32,
     // WebGL2 structs must be 16 byte aligned.
     #[cfg(feature = "webgl2")]
     _webgl2_padding: Vec3,
@@ -309,8 +310,8 @@ fn setup(
         // Add the setting to the camera.
         // This component is also used to determine on which camera to run the post processing effect.
         PostProcessSettings {
-            intensity: 0.02,
-            ..default()
+            time: 1.,
+            debug_step: 1.,
         },
     ));
 
@@ -342,16 +343,7 @@ fn rotate(time: Res<Time>, mut query: Query<&mut Transform, With<Rotates>>) {
 // Change the intensity over time to show that the effect is controlled from the main world
 fn update_settings(mut settings: Query<&mut PostProcessSettings>, time: Res<Time>) {
     for mut setting in &mut settings {
-        let mut intensity = ops::sin(time.elapsed_secs());
-        // Make it loop periodically
-        intensity = ops::sin(intensity);
-        // Remap it to 0..1 because the intensity can't be negative
-        intensity = intensity * 0.5 + 0.5;
-        // Scale it to a more reasonable level
-        intensity *= 0.015;
-
-        // Set the intensity.
-        // This will then be extracted to the render world and uploaded to the GPU automatically by the [`UniformComponentPlugin`]
-        setting.intensity = intensity;
+        setting.time = time.elapsed_secs();
+        setting.debug_step = 1.;
     }
 }
