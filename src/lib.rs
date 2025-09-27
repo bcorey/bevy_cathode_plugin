@@ -1,7 +1,6 @@
 use bevy::{
     core_pipeline::{
         FullscreenShader,
-        core_2d::graph::{Core2d, Node2d},
         core_3d::graph::{Core3d, Node3d},
     },
     ecs::query::QueryItem,
