@@ -6,12 +6,12 @@
 //!
 //! This is a fairly low level example and assumes some familiarity with rendering concepts and wgpu.
 
-use bevy::{post_process::PostProcessPlugin, prelude::*, window::PrimaryWindow};
-use bevy_crt::PostProcessSettings;
+use bevy::{prelude::*, window::PrimaryWindow};
+use bevy_crt::{CathodePlugin, CathodeSettings};
 
 fn main() {
     App::new()
-        .add_plugins((DefaultPlugins, PostProcessPlugin))
+        .add_plugins((DefaultPlugins, CathodePlugin))
         .add_systems(Startup, setup)
         .add_systems(Update, (rotate, update_settings))
         .run();
@@ -43,16 +43,10 @@ fn setup(
         },
         // Add the setting to the camera.
         // This component is also used to determine on which camera to run the post processing effect.
-        PostProcessSettings {
-            canvas_width: crt_canvas_width,
-            canvas_height: crt_canvas_height,
-            cell_offset: 0.5,
-            cell_size: 5.,
-            border_mask: 1.1,
-            time: 0.,
-            pulse_intensity: 0.03,
-            pulse_width: 60.,
-            pulse_rate: 20.,
+        CathodeSettings {
+            crt_width: crt_canvas_width,
+            crt_height: crt_canvas_height,
+            ..default()
         },
     ));
 
@@ -82,8 +76,8 @@ fn rotate(time: Res<Time>, mut query: Query<&mut Transform, With<Rotates>>) {
 }
 
 // Change the intensity over time to show that the effect is controlled from the main world
-fn update_settings(mut settings: Query<&mut PostProcessSettings>, time: Res<Time>) {
+fn update_settings(mut settings: Query<&mut CathodeSettings>, time: Res<Time>) {
     for mut setting in &mut settings {
-        setting.time = time.elapsed_secs() / 1.;
+        setting.time = time.elapsed_secs();
     }
 }

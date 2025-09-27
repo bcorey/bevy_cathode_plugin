@@ -1,4 +1,5 @@
-// This shader computes the chromatic aberration effect
+// This shader computes the cathode ray tube effect.
+// Adapted from 'Complex CRT' at https://github.com/cmhhelgeson/WGSL_Shader_Depot
 
 // Since post processing is a fullscreen effect, we use the fullscreen vertex shader provided by bevy.
 // This will import a vertex shader that renders a single fullscreen triangle.
@@ -22,9 +23,9 @@
 
 @group(0) @binding(0) var screen_texture: texture_2d<f32>;
 @group(0) @binding(1) var texture_sampler: sampler;
-struct PostProcessSettings {
-    canvasWidth: f32,
-    canvasHeight: f32,
+struct CathodeSettings {
+    crtWidth: f32,
+    crtHeight: f32,
     cellOffset: f32,
     cellSize: f32,
     borderMask: f32,
@@ -37,13 +38,13 @@ struct PostProcessSettings {
     _webgl2_padding: vec3<f32>
 #endif
 }
-@group(0) @binding(2) var<uniform> settings: PostProcessSettings;
+@group(0) @binding(2) var<uniform> settings: CathodeSettings;
 
 @fragment
 fn fragment(input: FullscreenVertexOutput) -> @location(0) vec4<f32> {
     var pixel = (input.uv) * vec2<f32>(
-        settings.canvasWidth,
-        settings.canvasHeight
+        settings.crtWidth,
+        settings.crtHeight
     );
 
     var coord = pixel / settings.cellSize;
@@ -53,7 +54,7 @@ fn fragment(input: FullscreenVertexOutput) -> @location(0) vec4<f32> {
 
     var mask_coord = floor(coord + cell_offset) * settings.cellSize;
 
-    var samplePoint = mask_coord / vec2<f32>(settings.canvasWidth, settings.canvasHeight);
+    var samplePoint = mask_coord / vec2<f32>(settings.crtWidth, settings.crtHeight);
 
     var abberation = textureSample(
         screen_texture,

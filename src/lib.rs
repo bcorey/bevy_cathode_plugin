@@ -27,9 +27,9 @@ use bevy::{
 const SHADER_ASSET_PATH: &str = "shaders/post_processing.wgsl";
 
 /// It is generally encouraged to set up post processing effects as a plugin
-pub struct PostProcessPlugin;
+pub struct CathodePlugin;
 
-impl Plugin for PostProcessPlugin {
+impl Plugin for CathodePlugin {
     fn build(&self, app: &mut App) {
         app.add_plugins((
             // The settings will be a component that lives in the main world but will
@@ -38,11 +38,11 @@ impl Plugin for PostProcessPlugin {
             // This plugin will take care of extracting it automatically.
             // It's important to derive [`ExtractComponent`] on [`PostProcessingSettings`]
             // for this plugin to work correctly.
-            ExtractComponentPlugin::<PostProcessSettings>::default(),
+            ExtractComponentPlugin::<CathodeSettings>::default(),
             // The settings will also be the data used in the shader.
             // This plugin will prepare the component for the GPU by creating a uniform buffer
             // and writing the data to that buffer every frame.
-            UniformComponentPlugin::<PostProcessSettings>::default(),
+            UniformComponentPlugin::<CathodeSettings>::default(),
         ));
 
         // We need to get the render app from the main app
@@ -103,10 +103,10 @@ impl ViewNode for PostProcessNode {
     type ViewQuery = (
         &'static ViewTarget,
         // This makes sure the node only runs on cameras with the PostProcessSettings component
-        &'static PostProcessSettings,
+        &'static CathodeSettings,
         // As there could be multiple post processing components sent to the GPU (one per camera),
         // we need to get the index of the one that is associated with the current view.
-        &'static DynamicUniformIndex<PostProcessSettings>,
+        &'static DynamicUniformIndex<CathodeSettings>,
     );
 
     // Runs the node logic
@@ -139,7 +139,7 @@ impl ViewNode for PostProcessNode {
         };
 
         // Get the settings uniform binding
-        let settings_uniforms = world.resource::<ComponentUniforms<PostProcessSettings>>();
+        let settings_uniforms = world.resource::<ComponentUniforms<CathodeSettings>>();
         let Some(settings_binding) = settings_uniforms.uniforms().binding() else {
             return Ok(());
         };
@@ -230,7 +230,7 @@ fn init_post_process_pipeline(
                 // The sampler that will be used to sample the screen texture
                 sampler(SamplerBindingType::Filtering),
                 // The settings uniform that will control the effect
-                uniform_buffer::<PostProcessSettings>(true),
+                uniform_buffer::<CathodeSettings>(true),
             ),
         ),
     );
@@ -268,10 +268,10 @@ fn init_post_process_pipeline(
 }
 
 // This is the component that will get passed to the shader
-#[derive(Component, Default, Clone, Copy, ExtractComponent, ShaderType)]
-pub struct PostProcessSettings {
-    pub canvas_width: f32,
-    pub canvas_height: f32,
+#[derive(Component, Clone, Copy, ExtractComponent, ShaderType)]
+pub struct CathodeSettings {
+    pub crt_width: f32,
+    pub crt_height: f32,
     pub cell_offset: f32,
     pub cell_size: f32,
     pub border_mask: f32,
@@ -279,7 +279,20 @@ pub struct PostProcessSettings {
     pub pulse_intensity: f32,
     pub pulse_width: f32,
     pub pulse_rate: f32,
-    // WebGL2 structs must be 16 byte aligned.
-    #[cfg(feature = "webgl2")]
-    _webgl2_padding: Vec3,
+}
+
+impl Default for CathodeSettings {
+    fn default() -> Self {
+        Self {
+            crt_width: 1500.,
+            crt_height: 1500.,
+            cell_offset: 0.5,
+            cell_size: 5.,
+            border_mask: 1.1,
+            time: 0.,
+            pulse_intensity: 0.03,
+            pulse_width: 60.,
+            pulse_rate: 10.,
+        }
+    }
 }
