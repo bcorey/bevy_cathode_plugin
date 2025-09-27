@@ -3,6 +3,11 @@ name = "bevy_crt"
 version = "0.1.0"
 edition = "2024"
 
+[lib]
+name = "bevy_crt"
+path = "src/lib.rs"
+test = true
+
 [dependencies]
 bevy = { git = "https://github.com/bevyengine/bevy", tag = "v0.17.0-rc.2", version = "0.17.0-rc.2" }
 
