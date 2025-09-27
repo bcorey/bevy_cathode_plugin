@@ -1,6 +1,7 @@
 use bevy::{
     core_pipeline::{
         FullscreenShader,
+        core_2d::graph::{Core2d, Node2d},
         core_3d::graph::{Core3d, Node3d},
     },
     ecs::query::QueryItem,
@@ -21,6 +22,7 @@ use bevy::{
         renderer::{RenderContext, RenderDevice},
         view::ViewTarget,
     },
+    ui_render::graph::NodeUi,
 };
 
 const SHADER_ASSET_PATH: &str = "shaders/flat_crt.wgsl";
@@ -77,11 +79,7 @@ impl Plugin for CathodePlugin {
                 Core3d,
                 // Specify the node ordering.
                 // This will automatically create all required node edges to enforce the given ordering.
-                (
-                    Node3d::Tonemapping,
-                    PostProcessLabel,
-                    Node3d::EndMainPassPostProcessing,
-                ),
+                (NodeUi::UiPass, PostProcessLabel, Node3d::Upscaling),
             );
     }
 }
@@ -286,7 +284,7 @@ impl Default for CathodeSettings {
             crt_width: 1500.,
             crt_height: 1500.,
             cell_offset: 0.5,
-            cell_size: 5.,
+            cell_size: 3.,
             border_mask: 1.1,
             time: 0.,
             pulse_intensity: 0.03,
