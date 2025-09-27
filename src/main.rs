@@ -29,6 +29,7 @@ use bevy::{
         renderer::{RenderContext, RenderDevice},
         view::ViewTarget,
     },
+    window::PrimaryWindow,
 };
 
 /// This example uses a shader source file from the assets subdirectory
@@ -286,8 +287,18 @@ fn init_post_process_pipeline(
 // This is the component that will get passed to the shader
 #[derive(Component, Default, Clone, Copy, ExtractComponent, ShaderType)]
 struct PostProcessSettings {
+    canvas_width: f32,
+    canvas_height: f32,
+    cell_offset: f32,
+    cell_size: f32,
+    border_mask: f32,
     time: f32,
     debug_step: f32,
+    screen_curvature: f32,
+    zoom: f32,
+    pulse_intensity: f32,
+    pulse_width: f32,
+    pulse_rate: f32,
     // WebGL2 structs must be 16 byte aligned.
     #[cfg(feature = "webgl2")]
     _webgl2_padding: Vec3,
@@ -298,28 +309,48 @@ fn setup(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
+    window: Single<&Window, With<PrimaryWindow>>,
 ) {
+    let crt_canvas_width = window.physical_width() as f32;
+    let crt_canvas_height = window.physical_height() as f32;
     // camera
     commands.spawn((
         Camera3d::default(),
-        Transform::from_translation(Vec3::new(0.0, 0.0, 5.0)).looking_at(Vec3::default(), Vec3::Y),
+        Transform::from_translation(Vec3::new(0.0, 0.0, 5.0))
+            .looking_at(Vec3::new(-1.0, 1.0, 0.0), Vec3::Y),
         Camera {
-            clear_color: Color::WHITE.into(),
+            clear_color: Color::Srgba(Srgba {
+                red: 0.1,
+                green: 0.1,
+                blue: 0.1,
+                alpha: 1.0,
+            })
+            .into(),
             ..default()
         },
         // Add the setting to the camera.
         // This component is also used to determine on which camera to run the post processing effect.
         PostProcessSettings {
-            time: 1.,
-            debug_step: 1.,
+            canvas_width: crt_canvas_width,
+            canvas_height: crt_canvas_height,
+            cell_offset: 0.5,
+            cell_size: 5.,
+            border_mask: 0.9,
+            time: 0.,
+            debug_step: 7.,
+            screen_curvature: 0.08,
+            zoom: 1.,
+            pulse_intensity: 0.03,
+            pulse_width: 60.,
+            pulse_rate: 20.,
         },
     ));
 
     // cube
     commands.spawn((
         Mesh3d(meshes.add(Cuboid::default())),
-        MeshMaterial3d(materials.add(Color::srgb(0.8, 0.7, 0.6))),
-        Transform::from_xyz(0.0, 0.5, 0.0),
+        MeshMaterial3d(materials.add(Color::srgb(1., 1., 1.))),
+        Transform::from_xyz(0.0, 0.0, 0.0),
         Rotates,
     ));
     // light
@@ -343,7 +374,7 @@ fn rotate(time: Res<Time>, mut query: Query<&mut Transform, With<Rotates>>) {
 // Change the intensity over time to show that the effect is controlled from the main world
 fn update_settings(mut settings: Query<&mut PostProcessSettings>, time: Res<Time>) {
     for mut setting in &mut settings {
-        setting.time = time.elapsed_secs();
-        setting.debug_step = 1.;
+        setting.time = time.elapsed_secs() / 10.;
+        setting.debug_step = 0.0;
     }
 }

@@ -23,8 +23,18 @@
 @group(0) @binding(0) var screen_texture: texture_2d<f32>;
 @group(0) @binding(1) var texture_sampler: sampler;
 struct PostProcessSettings {
+    canvasWidth: f32,
+    canvasHeight: f32,
+    cellOffset: f32,
+    cellSize: f32,
+    borderMask: f32,
     time: f32,
     debugStep: f32,
+    screenCurvature: f32,
+    zoom: f32,
+    pulseIntensity: f32,
+    pulseWidth: f32,
+    pulseRate: f32,
 #ifdef SIXTEEN_BYTE_ALIGNMENT
     // WebGL2 structs must be 16 byte aligned.
     _webgl2_padding: vec3<f32>
@@ -32,44 +42,55 @@ struct PostProcessSettings {
 }
 @group(0) @binding(2) var<uniform> settings: PostProcessSettings;
 
-fn inverseLerp(val: f32, minVal: f32, maxVal: f32) -> f32 {
-    return (val - minVal) / (maxVal - minVal);
-}
-
-fn remap(
-    val: f32,
-    inputMin: f32,
-    inputMax: f32,
-    outputMin: f32,
-    outputMax: f32,
-) -> f32 {
-    var t: f32 = inverseLerp(val, inputMin, inputMax);
-    return mix(outputMin, outputMax, t);
-}
-
 @fragment
 fn fragment(input: FullscreenVertexOutput) -> @location(0) vec4<f32> {
-    let t1 = remap(
-        sin(input.uv.y * 400.0 + settings.time * 10.0),
-        -1.0,
-        1.0,
-        0.9,
-        1.0
+    //Zoom effect hack, doesn't work past certain screen curvatures
+  //Add select statement at -1.0 to show what would happen if -1.0 was - 0.0
+    var uv = input.uv * (settings.zoom + (dot(input.uv, input.uv) - select(
+        1.0, 0.0, settings.debugStep >= 6 && settings.debugStep <= 7
+    )) * settings.screenCurvature);
+    var pixel = (uv * 0.5 + 0.5) * vec2<f32>(
+        settings.canvasWidth,
+        settings.canvasHeight
     );
 
-    let t2 = remap(
-        sin(input.uv.y * 200.0 - settings.time * 20.0),
-        -1.0,
-        1.0,
-        0.95,
-        1.0
-    );
+    var coord = pixel / settings.cellSize;
+    var subcoord = coord * vec2<f32>(select(settings.cellSize, 3.0, settings.cellSize >= 6.0), 1);
 
-    var color = textureSample(
+    var cell_offset = vec2<f32>(0, fract(floor(coord.x) * settings.cellOffset));
+
+    var mask_coord = floor(coord + cell_offset) * settings.cellSize;
+
+    var samplePoint = mask_coord / vec2<f32>(settings.canvasWidth, settings.canvasHeight);
+
+    var abberation = textureSample(
         screen_texture,
         texture_sampler,
-        input.uv
-    ).xyz * t1 * t2;
+        samplePoint
+    ).xyz;
+
+    var color = abberation;
+
+  //current implementation does not give an even amount of space to each r, g, b unit of a cell
+  //Fix/hack this by multiplying subCoord.x by cellSize at cellSizes below 6
+    var ind = floor(subcoord.x) % 3;
+
+    var mask_color = vec3<f32>(
+        f32(ind == 0.0),
+        f32(ind == 1.0),
+        f32(ind == 2.0)
+    ) * 3.0;
+
+    var cell_uv = fract(subcoord + cell_offset) * 2.0 - 1.0;
+    var border: vec2<f32> = 1.0 - cell_uv * cell_uv * settings.borderMask;
+
+    mask_color *= vec3f(clamp(border.x, 0.0, 1.0) * clamp(border.y, 0.0, 1.0));
+
+    color *= vec3f(1.0 + (mask_color - 1.0) * 1.0);
+
+    color.r *= 1.0 + settings.pulseIntensity * sin(pixel.y / settings.pulseWidth + settings.time * settings.pulseRate);
+    color.b *= 1.0 + settings.pulseIntensity * sin(pixel.y / settings.pulseWidth + settings.time * settings.pulseRate);
+    color.g *= 1.0 + settings.pulseIntensity * sin(pixel.y / settings.pulseWidth + settings.time * settings.pulseRate);
 
     return vec4<f32>(color, 1.0);
 }
