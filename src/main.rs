@@ -24,13 +24,10 @@ fn setup(
     mut materials: ResMut<Assets<StandardMaterial>>,
     window: Single<&Window, With<PrimaryWindow>>,
 ) {
-    let crt_canvas_width = window.physical_width() as f32;
-    let crt_canvas_height = window.physical_height() as f32;
     // camera
     commands.spawn((
         Camera3d::default(),
-        Transform::from_translation(Vec3::new(0.0, 0.0, 5.0))
-            .looking_at(Vec3::new(0.0, 0.0, 0.0), Vec3::Y),
+        Transform::from_translation(Vec3::new(0.0, 0.0, 5.0)).looking_at(Vec3::default(), Vec3::Y),
         Camera {
             clear_color: Color::Srgba(Srgba {
                 red: 0.1,
@@ -44,8 +41,8 @@ fn setup(
         // Add the setting to the camera.
         // This component is also used to determine on which camera to run the post processing effect.
         CathodeSettings {
-            crt_width: crt_canvas_width,
-            crt_height: crt_canvas_height,
+            crt_width: window.physical_width() as f32,
+            crt_height: window.physical_height() as f32,
             ..default()
         },
     ));
