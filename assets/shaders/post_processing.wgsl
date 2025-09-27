@@ -29,9 +29,6 @@ struct PostProcessSettings {
     cellSize: f32,
     borderMask: f32,
     time: f32,
-    debugStep: f32,
-    screenCurvature: f32,
-    zoom: f32,
     pulseIntensity: f32,
     pulseWidth: f32,
     pulseRate: f32,
@@ -44,12 +41,7 @@ struct PostProcessSettings {
 
 @fragment
 fn fragment(input: FullscreenVertexOutput) -> @location(0) vec4<f32> {
-    //Zoom effect hack, doesn't work past certain screen curvatures
-  //Add select statement at -1.0 to show what would happen if -1.0 was - 0.0
-    var uv = input.uv * (settings.zoom + (dot(input.uv, input.uv) - select(
-        1.0, 0.0, settings.debugStep >= 6 && settings.debugStep <= 7
-    )) * settings.screenCurvature);
-    var pixel = (uv * 0.5 + 0.5) * vec2<f32>(
+    var pixel = (input.uv) * vec2<f32>(
         settings.canvasWidth,
         settings.canvasHeight
     );
