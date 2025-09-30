@@ -9,7 +9,7 @@ path = "src/lib.rs"
 test = true
 
 [dependencies]
-bevy = { git = "https://github.com/bevyengine/bevy", tag = "v0.17.0-rc.2", version = "0.17.0-rc.2" }
+bevy = "0.17"
 
 [profile.dev.package."*"]
 opt-level=3

@@ -13,15 +13,18 @@ fn main() {
 fn setup(
     mut commands: Commands,
     mut meshes: ResMut<Assets<Mesh>>,
+    asset_server: Res<AssetServer>,
     mut materials: ResMut<Assets<StandardMaterial>>,
     window: Single<&Window, With<PrimaryWindow>>,
 ) {
+    let cube_location = vec3(0.0, 1.0, 0.0);
+
     // camera
     commands.spawn((
         Camera3d::default(),
-        Transform::from_translation(Vec3::new(0.0, 0.0, 5.0)).looking_at(Vec3::default(), Vec3::Y),
+        Transform::from_translation(Vec3::new(3.0, 3.0, 8.0)).looking_at(cube_location, Vec3::Y),
         Camera {
-            clear_color: Color::BLACK.into(),
+            clear_color: Color::WHITE.into(),
             ..default()
         },
         // Add the setting to the camera.
@@ -29,16 +32,44 @@ fn setup(
         CathodeSettings {
             crt_width: window.physical_width() as f32,
             crt_height: window.physical_height() as f32,
+            border_mask: 0.5,
             ..default()
         },
     ));
 
     // cube
     commands.spawn((
-        Mesh3d(meshes.add(Cuboid::default())),
+        Mesh3d(meshes.add(Cuboid {
+            half_size: Vec3::new(0.3, 0.3, 0.3),
+        })),
         MeshMaterial3d(materials.add(Color::srgb(1., 1., 1.))),
-        Transform::from_xyz(0.0, 0.0, 0.0),
+        Transform::from_xyz(cube_location.x, cube_location.y, cube_location.z),
         Rotates,
+    ));
+
+    commands.spawn((
+        SceneRoot(
+            asset_server.load(GltfAssetLabel::Scene(0).from_asset("models/memphis_arches.glb")),
+        ),
+        Transform::from_xyz(1., 0., 1.),
+    ));
+    commands.spawn((
+        SceneRoot(
+            asset_server.load(GltfAssetLabel::Scene(0).from_asset("models/memphis_arches.glb")),
+        ),
+        Transform::from_xyz(5., 0., 1.),
+    ));
+    commands.spawn((
+        SceneRoot(
+            asset_server.load(GltfAssetLabel::Scene(0).from_asset("models/memphis_arches.glb")),
+        ),
+        Transform::from_xyz(-3., 0., 1.),
+    ));
+    commands.spawn((
+        SceneRoot(
+            asset_server.load(GltfAssetLabel::Scene(0).from_asset("models/memphis_arches.glb")),
+        ),
+        Transform::from_xyz(-7., 0., 1.),
     ));
     // light
     commands.spawn(DirectionalLight {
@@ -147,8 +178,14 @@ fn rotate(time: Res<Time>, mut query: Query<&mut Transform, With<Rotates>>) {
 }
 
 // Change the intensity over time to show that the effect is controlled from the main world
-fn update_settings(mut settings: Query<&mut CathodeSettings>, time: Res<Time>) {
+fn update_settings(
+    mut settings: Query<&mut CathodeSettings>,
+    time: Res<Time>,
+    window: Single<&Window, With<PrimaryWindow>>,
+) {
     for mut setting in &mut settings {
         setting.time = time.elapsed_secs();
+        setting.crt_width = window.physical_width() as f32;
+        setting.crt_height = window.physical_height() as f32;
     }
 }
