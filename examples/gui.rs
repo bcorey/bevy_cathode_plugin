@@ -32,7 +32,7 @@ fn setup(
         CathodeSettings {
             crt_width: window.physical_width() as f32,
             crt_height: window.physical_height() as f32,
-            border_mask: 0.5,
+            border_mask: 0.0,
             ..default()
         },
     ));
