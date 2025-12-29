@@ -276,6 +276,9 @@ pub struct CathodeSettings {
     pub pulse_intensity: f32,
     pub pulse_width: f32,
     pub pulse_rate: f32,
+    pub _webgl2_padding_1: f32,
+    pub _webgl2_padding_2: f32,
+    pub _webgl2_padding_3: f32,
 }
 
 impl Default for CathodeSettings {
@@ -290,6 +293,9 @@ impl Default for CathodeSettings {
             pulse_intensity: 0.03,
             pulse_width: 60.,
             pulse_rate: 10.,
+            _webgl2_padding_1: 0f32,
+            _webgl2_padding_2: 0f32,
+            _webgl2_padding_3: 0f32,
         }
     }
 }

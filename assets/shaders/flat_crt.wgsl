@@ -33,10 +33,10 @@ struct CathodeSettings {
     pulseIntensity: f32,
     pulseWidth: f32,
     pulseRate: f32,
-#ifdef SIXTEEN_BYTE_ALIGNMENT
     // WebGL2 structs must be 16 byte aligned.
-    _webgl2_padding: vec3<f32>
-#endif
+    _webgl2_padding_1: f32,
+    _webgl2_padding_2: f32,
+    _webgl2_padding_3: f32,
 }
 @group(0) @binding(2) var<uniform> settings: CathodeSettings;
 
