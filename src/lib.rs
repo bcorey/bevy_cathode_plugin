@@ -1,4 +1,5 @@
 use bevy::{
+    asset::{embedded_asset, load_embedded_asset},
     core_pipeline::{
         FullscreenShader,
         core_3d::graph::{Core3d, Node3d},
@@ -24,13 +25,13 @@ use bevy::{
     ui_render::graph::NodeUi,
 };
 
-const SHADER_ASSET_PATH: &str = "shaders/flat_crt.wgsl";
-
 /// It is generally encouraged to set up post processing effects as a plugin
 pub struct CathodePlugin;
 
 impl Plugin for CathodePlugin {
     fn build(&self, app: &mut App) {
+        embedded_asset!(app, "../assets/shaders/flat_crt.wgsl");
+
         app.add_plugins((
             // The settings will be a component that lives in the main world but will
             // be extracted to the render world every frame.
@@ -234,7 +235,7 @@ fn init_post_process_pipeline(
     let sampler = render_device.create_sampler(&SamplerDescriptor::default());
 
     // Get the shader handle
-    let shader = asset_server.load(SHADER_ASSET_PATH);
+    let shader = load_embedded_asset!(&*asset_server, "../assets/shaders/flat_crt.wgsl");
     // This will setup a fullscreen triangle for the vertex state.
     let vertex_state = fullscreen_shader.to_vertex_state();
     let pipeline_id = pipeline_cache
